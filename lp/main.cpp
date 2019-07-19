@@ -25,12 +25,10 @@ int _tmain(int argc, _TCHAR* argv[])
 	}
 	//while (1)
 	//{
-		led.ColorDisplay();
+		led.TimeDisplay();
 		cout << mySerialPort.WriteData((unsigned char*)led.Assemble().c_str(), led.Assemble().size()) << endl;//这个函数就是给串口发送数据的函数，temp就是要发送的数组。
 		cout << mySerialPort.GetBytesInCOM() << endl;//这个函数就是显示返回值函数
-		led.CancelDisplay();
-		cout << mySerialPort.WriteData((unsigned char*)led.Assemble().c_str(), led.Assemble().size()) << endl;//这个函数就是给串口发送数据的函数，temp就是要发送的数组。
-		cout << mySerialPort.GetBytesInCOM() << endl;//这个函数就是显示返回值函数
+		
 	//}
 	
 	

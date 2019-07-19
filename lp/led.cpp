@@ -29,7 +29,7 @@ void LED::SetAd()
 		cin >> temp;
 		data = data + temp;
 	}
-	ss << setw(4) << setfill('0') << data.size();
+	ss << setw(4) << setfill('0') << ToHex(data.size());
 	temp = ss.str();
 	len = HexToStr(temp);
 	Crc16();
@@ -89,7 +89,7 @@ string LED::Assemble()
 	return head + reserved + com + len + data + checksum + end;
 }
 
-void LED::ColorDisplay()
+void LED::ColoredDisplay()
 {
 	Init();
 	com.assign((char*)command, 2, 1);
@@ -160,4 +160,29 @@ void LED::Init()
 	len.clear();
 	data.clear();
 	checksum.clear();
+}
+
+void LED::TimeDisplay()
+{
+	Init();
+	com.assign((char*)command, 5, 1);
+	string temp;
+	stringstream ss;
+	cout << "请输入行号 (0为不显示时间) : ";
+	cin >> temp;
+	ss << setw(2) << setfill('0') << temp;
+	data = HexToStr(ss.str());
+	ss.clear();
+	ss.str("");
+	cout << "请输入字体颜色 (1 - 红色, 2 - 绿色, 3 - 黄色) :";
+	cin >> temp;
+	ss << setw(2) << setfill('0') << temp;
+	temp = ss.str() + "00";
+	data = data + HexToStr(temp);
+	ss.clear();
+	ss.str("");
+	ss << setw(4) << setfill('0') << data.size();
+	temp = ss.str();
+	len = HexToStr(temp);
+	Crc16();
 }

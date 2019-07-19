@@ -14,9 +14,10 @@ public:
 		end.assign(e,0,1);
 	}
 	void ShowCommand();
+	void TimeDisplay();
 	void SetAd();
 	void Init();
-	void ColorDisplay();
+	void ColoredDisplay();
 	void CancelDisplay();
 	std::string StringToHex(std::string str);
 	std::string HexToStr(std::string str);
