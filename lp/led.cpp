@@ -55,35 +55,29 @@ static const unsigned char aucCRCLo[] =
 
 void LED::setad()
 {
-	data = new unsigned char[123];
-	com = command[1];
+	com.assign((char*)command,1,1);
 	string temp;
 	stringstream ss;
 	cout << "请输入行号: ";
 	cin >> temp;
 	ss << setw(2) << setfill('0') << temp;
-	strcpy((char*)data,HexToStr(ss.str()).c_str());
+	data=HexToStr(ss.str());
 	ss.clear();
 	ss.str("");
 	cout << "请输入字体颜色 (1 - 红色, 2 - 绿色, 3 - 黄色) :";
 	cin >> temp;
 	ss << setw(2) << setfill('0') << temp;
-	temp = ss.str();
-	strcat((char*)data,HexToStr(temp).c_str());
-	data[strlen((char*)data)] = 0x00;
-	data[strlen((char*)data)] = '\0';
+	temp = ss.str()+"00";
+	data=data+HexToStr(temp);
 	ss.clear();
 	ss.str("");
 	cout << "请输入广告内容 (清除请直接按回车):";
 	cin >> temp;
-	strcat((char*)data, StringToHex(HexToStr(temp)).c_str());
-	ss << setw(4) << setfill('0') << strlen((char*)data);
+	data=data+ temp;
+	ss << setw(4) << setfill('0') << data.size();
 	temp = ss.str();
-	string high = temp.substr(0, 2), low = temp.substr(2);
-	strcat((char*)len, HexToStr(high).c_str());
-	strcat((char*)len, HexToStr(low).c_str());
-	checksum[0] = crc16(AssBefore()) >> 8;
-	checksum[1] = crc16(AssBefore()) & 0xff;
+	len = HexToStr(temp);
+	crc16();
 	//string test = HexToStr(AssAfter());
 	//system("pause");
 }
@@ -111,50 +105,28 @@ string LED::HexToStr(string str)
 	return result;
 }
 
-unsigned short LED::crc16(unsigned char* ass)
+void LED::crc16()
 {
+	string temp = reserved + com + len + data;
+	char c = 0x00;
+	temp.push_back(c);
+	temp.push_back(c);
 	unsigned char ucCRCHi = 0xFF;
 	unsigned char ucCRCLo = 0xFF;
 	int iIndex;
-	int n = strlen((char*)ass);
+	int n = temp.size(), i = 0;
 	while (n--)
 	{
-		iIndex = ucCRCLo ^ *(ass++);
+		iIndex = ucCRCLo ^ temp[i++];
 		ucCRCLo = (unsigned char)(ucCRCHi ^ aucCRCHi[iIndex]);
 		ucCRCHi = aucCRCLo[iIndex];
 	}
-	return (unsigned short)(ucCRCHi << 8 | ucCRCLo);
+	char t[2] = { ucCRCHi,ucCRCLo };
+	checksum.assign(t,0,2);
 }
 
-unsigned char* LED::AssBefore()
-{
-	unsigned char* ass = new unsigned char[134];
-	ass[0] = reserved[0];
-	ass[1] = reserved[1];
-	ass[2] = reserved[2];
-	ass[3] = com;
-	ass[4] = len[0];
-	ass[5] = len[1];
-	ass[6] = '\0';
-	strcat((char*)ass, (char*)data);
-	return ass;
-}
 
-unsigned char* LED::AssAfter()
+string LED::Assemble()
 {
-	unsigned char* ass = new unsigned char[134];
-	ass[0] = head[0];
-	ass[1] = head[1];
-	ass[2] = reserved[0];
-	ass[3] = reserved[1];
-	ass[4] = reserved[2];
-	ass[5] = com;
-	ass[6] = len[0];
-	ass[7] = len[1];
-	ass[8] = '\0';
-	strcat((char*)ass, (char*)data);
-	strcat((char*)ass, (char*)checksum);
-	ass[strlen((char*)ass)] = end;
-	ass[strlen((char*)ass)] = '\0';
-	return ass;
+	return head + reserved + com + len + data + checksum + end;
 }
