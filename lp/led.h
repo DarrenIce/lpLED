@@ -13,7 +13,7 @@ public:
 		char e[] = { 0xAF };
 		end.assign(e,0,1);
 	}
-	void ShowCommand();
+	bool ShowCommand();
 	void SetTime();
 	void SetAd();
 	void Init();
@@ -24,6 +24,7 @@ public:
 	std::string HexToStr(std::string str);
 	std::string Assemble();
 	void Crc16();
+	void LengthAndCrc();
 	std::string ToHex(int dec);
 private:
 	unsigned char command[10] =

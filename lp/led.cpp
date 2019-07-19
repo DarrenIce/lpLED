@@ -29,10 +29,7 @@ void LED::SetAd()
 		cin >> temp;
 		data = data + temp;
 	}
-	ss << setw(4) << setfill('0') << ToHex(data.size());
-	temp = ss.str();
-	len = HexToStr(temp);
-	Crc16();
+	LengthAndCrc();
 }
 
 string LED::StringToHex(string str)
@@ -83,7 +80,6 @@ void LED::Crc16()
 	checksum.push_back(temp_high);
 }
 
-
 string LED::Assemble()
 {
 	return head + reserved + com + len + data + checksum + end;
@@ -117,10 +113,7 @@ void LED::ColoredDisplay()
 	cout << "请输入显示内容: ";
 	cin >> temp;
 	data = data + temp;
-	ss << setw(4) << setfill('0') << ToHex(data.size());
-	temp = ss.str();
-	len = HexToStr(temp);
-	Crc16();
+	LengthAndCrc();
 }
 
 string LED::ToHex(int dec)
@@ -146,12 +139,7 @@ void LED::CancelDisplay()
 		cin >> i;
 	}
 	data.push_back(line[i]);
-	string temp;
-	stringstream ss;
-	ss << setw(4) << setfill('0') << ToHex(data.size());
-	temp = ss.str();
-	len = HexToStr(temp);
-	Crc16();
+	LengthAndCrc();
 }
 
 void LED::Init()
@@ -179,12 +167,7 @@ void LED::TimeDisplay()
 	ss << setw(2) << setfill('0') << temp;
 	temp = ss.str() + "00";
 	data = data + HexToStr(temp);
-	ss.clear();
-	ss.str("");
-	ss << setw(4) << setfill('0') << ToHex(data.size());
-	temp = ss.str();
-	len = HexToStr(temp);
-	Crc16();
+	LengthAndCrc();
 }
 
 void LED::SetTime()
@@ -198,6 +181,55 @@ void LED::SetTime()
 		cin >> date[i];
 		data += HexToStr(ToHex(date[i]));
 	}
+	LengthAndCrc();
+}
+
+bool LED::ShowCommand()
+{
+	int i = 0;
+	system("cls");
+	cout << "请输入要执行的命令: " << endl
+		<< "0 - 设置时间	1 - 设置广告" << endl
+		<< "2 - 彩色显示	3 - 取消显示" << endl
+		<< "4 - 定时显示	5 - 时间显示" << endl
+		<< "6 - 广告换页	7 - 字符颜色" << endl
+		<< "8 - 行色变换	9 - 字色变换" << endl
+		<< "10 - 退出" << endl;
+	cin >> i;
+	switch (i)
+	{
+	case 0:
+		SetTime();
+		return true;
+	case 1:
+		SetAd();
+		return true;
+	case 2:
+		ColoredDisplay();
+		return true;
+	case 3:
+		CancelDisplay();
+		return true;
+	case 4:
+		return true;
+	case 5:
+		TimeDisplay();
+		return true;
+	case 6:
+		return true;
+	case 7:
+		return true;
+	case 8:
+		return true;
+	case 9:
+		return true;
+	default:
+		return false;
+	}
+}
+
+void LED::LengthAndCrc()
+{
 	string temp;
 	stringstream ss;
 	ss << setw(4) << setfill('0') << ToHex(data.size());
