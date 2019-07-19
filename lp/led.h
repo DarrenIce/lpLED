@@ -13,12 +13,16 @@ public:
 		char e[] = { 0xAF };
 		end.assign(e,0,1);
 	}
-	void show();
-	void setad();
+	void ShowCommand();
+	void SetAd();
+	void Init();
+	void ColorDisplay();
+	void CancelDisplay();
 	std::string StringToHex(std::string str);
 	std::string HexToStr(std::string str);
 	std::string Assemble();
-	void crc16();
+	void Crc16();
+	std::string ToHex(int dec);
 private:
 	unsigned char command[10] =
 	{
