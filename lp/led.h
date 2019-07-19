@@ -6,8 +6,10 @@ public:
 	{
 		char h[2] = { 0xAA,0x55 };
 		head.assign(h,0,2);
-		char r[3] = { 0x03,0x64,0x00 };
-		reserved.assign(r,0,3);
+		char r[2] = { 0x03,0x64};
+		reserved.assign(r,0,2);
+		char t = 0x00;
+		reserved.push_back(t);
 		char e[] = { 0xAF };
 		end.assign(e,0,1);
 	}

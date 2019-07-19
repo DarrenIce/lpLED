@@ -111,18 +111,23 @@ void LED::crc16()
 	char c = 0x00;
 	temp.push_back(c);
 	temp.push_back(c);
-	unsigned char ucCRCHi = 0xFF;
-	unsigned char ucCRCLo = 0xFF;
-	int iIndex;
-	int n = temp.size(), i = 0;
-	while (n--)
+	unsigned int crc = 0xffff;
+	unsigned char temp_low = 0x00;
+	for (int i = 0; i < temp.size(); i++)
 	{
-		iIndex = ucCRCLo ^ temp[i++];
-		ucCRCLo = (unsigned char)(ucCRCHi ^ aucCRCHi[iIndex]);
-		ucCRCHi = aucCRCLo[iIndex];
+		crc ^= temp[i];
+		for (int j = 0; j < 8; j++)
+		{
+			if (crc & 0x0001)
+				crc = crc >> 1 ^ 0xa001;
+			else
+				crc >>= 1;
+		}
+		temp_low = crc >> 8;
 	}
-	char t[2] = { ucCRCHi,ucCRCLo };
-	checksum.assign(t,0,2);
+	unsigned char temp_high = (crc << 8)>>8;
+	checksum.push_back(temp_low);
+	checksum.push_back(temp_high);
 }
 
 
