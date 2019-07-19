@@ -148,7 +148,7 @@ void LED::CancelDisplay()
 	data.push_back(line[i]);
 	string temp;
 	stringstream ss;
-	ss << setw(4) << setfill('0') << data.size();
+	ss << setw(4) << setfill('0') << ToHex(data.size());
 	temp = ss.str();
 	len = HexToStr(temp);
 	Crc16();
@@ -181,7 +181,26 @@ void LED::TimeDisplay()
 	data = data + HexToStr(temp);
 	ss.clear();
 	ss.str("");
-	ss << setw(4) << setfill('0') << data.size();
+	ss << setw(4) << setfill('0') << ToHex(data.size());
+	temp = ss.str();
+	len = HexToStr(temp);
+	Crc16();
+}
+
+void LED::SetTime()
+{
+	Init();
+	com.assign((char*)command, 0, 1);
+	int date[6];
+	cout << "请输入日期 (年月日时分秒, 年+2000即为年份) : ";
+	for (int i = 0; i < 6; i++)
+	{
+		cin >> date[i];
+		data += HexToStr(ToHex(date[i]));
+	}
+	string temp;
+	stringstream ss;
+	ss << setw(4) << setfill('0') << ToHex(data.size());
 	temp = ss.str();
 	len = HexToStr(temp);
 	Crc16();
