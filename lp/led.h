@@ -19,7 +19,12 @@ public:
 	void Init();
 	void ColoredDisplay();
 	void CancelDisplay();
+	void TimingDisplay();
 	void TimeDisplay();
+	void SetAdChangeMode();
+	void SetCharColor();
+	void LineColorTrans();
+	void CharColorTrans();
 	std::string StringToHex(std::string str);
 	std::string HexToStr(std::string str);
 	std::string Assemble();

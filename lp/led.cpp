@@ -7,7 +7,7 @@ void LED::SetAd()
 	com.assign((char*)command,1,1);
 	string temp;
 	stringstream ss;
-	cout << "请输入行号: ";
+	cout << "请输入行号: (3/4)";
 	cin >> temp;
 	ss << setw(2) << setfill('0') << temp;
 	data=HexToStr(ss.str());
@@ -91,7 +91,7 @@ void LED::ColoredDisplay()
 	com.assign((char*)command, 2, 1);
 	string temp;
 	stringstream ss;
-	cout << "请输入行号: ";
+	cout << "请输入行号: (3/4)";
 	cin >> temp;
 	ss << setw(2) << setfill('0') << temp;
 	data = HexToStr(ss.str());
@@ -129,7 +129,7 @@ void LED::CancelDisplay()
 {
 	Init();
 	com.assign((char*)command, 3, 1);
-	cout << "请输入要取消的行号: ";
+	cout << "请输入要取消的行号: (3/4)";
 	int i;
 	cin >> i;
 	unsigned char line[] = { 0x00,0x01,0x02,0x04,0x08 };
@@ -156,7 +156,7 @@ void LED::TimeDisplay()
 	com.assign((char*)command, 5, 1);
 	string temp;
 	stringstream ss;
-	cout << "请输入行号 (0为不显示时间) : ";
+	cout << "请输入行号 (0/3/4, 0为不显示时间) : ";
 	cin >> temp;
 	ss << setw(2) << setfill('0') << temp;
 	data = HexToStr(ss.str());
@@ -211,17 +211,22 @@ bool LED::ShowCommand()
 		CancelDisplay();
 		return true;
 	case 4:
+		TimingDisplay();
 		return true;
 	case 5:
 		TimeDisplay();
 		return true;
 	case 6:
+		SetAdChangeMode();
 		return true;
 	case 7:
+		SetCharColor();
 		return true;
 	case 8:
+		LineColorTrans();
 		return true;
 	case 9:
+		CharColorTrans();
 		return true;
 	default:
 		return false;
@@ -236,4 +241,128 @@ void LED::LengthAndCrc()
 	temp = ss.str();
 	len = HexToStr(temp);
 	Crc16();
+}
+
+void LED::SetCharColor()
+{
+	Init();
+	com.assign((char*)command, 7, 1);
+	string temp;
+	stringstream ss;
+	cout << "请输入行号 (3/4) : ";
+	cin >> temp;
+	ss << setw(2) << setfill('0') << temp;
+	data = HexToStr(ss.str());
+	int color[8];
+	cout << "请输入每个字节的颜色 (1 - 红色, 2 - 绿色, 3 - 黄色) : ";
+	for (int i = 0; i < 8; i++)
+	{
+		cin >> color[i];
+		data += HexToStr(ToHex(color[i]));
+	}
+	LengthAndCrc();
+}
+
+void LED::LineColorTrans()
+{
+	Init();
+	com.assign((char*)command, 8, 1);
+	string temp;
+	stringstream ss;
+	cout << "请输入行号 (3/4) : ";
+	cin >> temp;
+	ss << setw(2) << setfill('0') << temp;
+	data = HexToStr(ss.str());
+	LengthAndCrc();
+}
+
+void LED::CharColorTrans()
+{
+	Init();
+	com.assign((char*)command, 9, 1);
+	string temp;
+	stringstream ss;
+	cout << "请输入行号 (3/4) : ";
+	cin >> temp;
+	ss << setw(2) << setfill('0') << temp;
+	data = HexToStr(ss.str());
+	int color[2];
+	cout << "请输入前景色和背景色 (1 - 红色, 2 - 绿色, 3 - 黄色) : ";
+	for (int i = 0; i < 2; i++)
+	{
+		cin >> color[i];
+		data += HexToStr(ToHex(color[i]));
+	}
+	LengthAndCrc();
+}
+
+void LED::TimingDisplay()
+{
+	Init();
+	com.assign((char*)command, 4, 1);
+	string temp;
+	stringstream ss;
+	cout << "请输入行号: (3/4)";
+	cin >> temp;
+	ss << setw(2) << setfill('0') << temp;
+	data = HexToStr(ss.str());
+	ss.clear();
+	ss.str("");
+	cout << "请输入显示时间 (0-255) : ";
+	int time;
+	cin >> time;
+	data += HexToStr(ToHex(time));
+	ss.clear();
+	ss.str("");
+	cout << "请输入字体颜色 (1 - 红色, 2 - 绿色, 3 - 黄色) :";
+	cin >> temp;
+	ss << setw(2) << setfill('0') << temp;
+	temp = ss.str() + "00";
+	data = data + HexToStr(temp);
+	ss.clear();
+	ss.str("");
+	cout << "请输入显示内容: ";
+	cin >> temp;
+	data = data + temp;
+	LengthAndCrc();
+}
+
+void LED::SetAdChangeMode()
+{
+	Init();
+	com.assign((char*)command, 6, 1);
+	string temp;
+	stringstream ss;
+	cout << "请输入行号: (3/4)";
+	cin >> temp;
+	ss << setw(2) << setfill('0') << temp;
+	data = HexToStr(ss.str());
+	char mode[] = {
+		0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,0x10,0x11,0x12,0x13
+	};
+	cout << "请输入换页模式" << endl
+		<< "0 - 从右往左滚动模式" << endl
+		<< "1 - 下翻页(移动)" << endl
+		<< "2 - 下翻页(覆盖)" << endl
+		<< "3 - 下翻页(清除)" << endl
+		<< "4 - 下翻页(空白)" << endl
+		<< "5 - 上翻页(移动)" << endl
+		<< "6 - 上翻页(覆盖)" << endl
+		<< "7 - 上翻页(清除)" << endl
+		<< "8 - 上翻页(空白)" << endl
+		<< "9 - 左画刷(覆盖)" << endl
+		<< "10 - 左画刷(清除)" << endl
+		<< "11 - 右画刷(覆盖)" << endl
+		<< "12 - 右画刷(清除)" << endl
+		<< "13 - 开门式(覆盖)" << endl
+		<< "14 - 开门式(清除)" << endl
+		<< "15 - 关门式(覆盖)" << endl
+		<< "16 - 关门式(清除)" << endl
+		<< "17 - 页切换模式" << endl
+		<< "18 - 从右进入的页切换模式" << endl
+		<< "19 - 定屏模式" << endl;
+	int i;
+	cin >> i;
+	data.push_back(mode[i]);
+	LengthAndCrc();
 }
