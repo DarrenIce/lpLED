@@ -23,11 +23,10 @@ public:
 	void SetCharColor();
 	void LineColorTrans();
 	void CharColorTrans();
-	std::string StringToHex(std::string str);
 	std::string HexToStr(std::string str);
 	BYTE* Assemble();
 	void Crc16();
-	void LengthAndCrc(int Len);
+	void LengthAndCrc();
 	std::string ToHex(int dec);
 	int getlen();
 private:
@@ -35,7 +34,6 @@ private:
 	BYTE len[2];
 	BYTE* data;
 	BYTE checksum[2];
-	int length;
 	int cursor;
 };
 

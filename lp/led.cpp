@@ -54,7 +54,6 @@ static const unsigned char aucCRCLo[] =
 
 void LED::Init()
 {
-	length = 0;
 	cursor = 0;
 	data = new BYTE[MAX_DATA_LEN];
 }
@@ -112,26 +111,14 @@ void LED::SetAd()
 {
 	Init();
 	com = COM_SET_AD;
-	string temp;
-	stringstream ss;
+	char temp;
 	cout << "请输入行号: (3/4)";
 	cin >> temp;
-	//ss << setw(2) << setfill('0') << temp;
-	//temp=HexToStr(ss.str());
-	data[cursor++] = temp[0]-'0';
-	//ss.clear();
-	//temp.clear();
-	//ss.str("");
+	data[cursor++] = temp - '0';
 	cout << "请输入字体颜色 (1 - 红色, 2 - 绿色, 3 - 黄色) :";
 	cin >> temp;
-	//ss << setw(2) << setfill('0') << temp << "01";
-	//temp = HexToStr(ss.str());
-	//for (int i = 0; i < 2; i++)
-		//data[cursor++] = temp[i];
-	data[cursor++] = temp[0] - '0';
+	data[cursor++] = temp - '0';
 	data[cursor++] = 0x00;
-	//ss.clear();
-	//ss.str("");
 	cout << "1 - 输入广告内容, 2 - 清除广告 : ";
 	int i = 0;
 	cin >> i;
@@ -146,18 +133,7 @@ void LED::SetAd()
 		}
 		delete[]context;
 	}
-	LengthAndCrc(cursor);
-}
-
-string LED::StringToHex(string str)
-{
-	const string hex = "0123456789ABCDEF";
-	stringstream ss;
-	for (int i = 0; i< str.size(); i++)
-	{
-		ss << hex[(unsigned char)str[i] >> 4] << hex[(unsigned char)str[i] & 0xf];
-	}
-	return ss.str();
+	LengthAndCrc();
 }
 
 string LED::HexToStr(string str)
@@ -181,7 +157,7 @@ void LED::Crc16()
 	temp[lent++] = com;
 	for (int i = 0; i < 2; i++)
 		temp[lent++] = len[i];
-	for (int i = 0; i < length-11; i++)
+	for (int i = 0; i < cursor; i++)
 		temp[lent++] = data[i];
 	for (int i = 0; i < 2; i++)
 		temp[lent++] = 0x00;
@@ -209,12 +185,11 @@ BYTE* LED::Assemble()
 	temp[lent++] = com;
 	for (int i = 0; i < 2; i++)
 		temp[lent++] = len[i];
-	for (int i = 0; i < length-11; i++)
+	for (int i = 0; i < cursor; i++)
 		temp[lent++] = data[i];
 	for (int i = 0; i < 2; i++)
 		temp[lent++] = checksum[i];
 	temp[lent++] = CTRL_END;
-	//length = lent;
 	return temp;
 }
 
@@ -227,51 +202,34 @@ string LED::ToHex(int dec)
 	return res;
 }
 
-void LED::LengthAndCrc(int Len)
+void LED::LengthAndCrc()
 {
-	length = Len + 11;
-	string temp;
-	stringstream ss;
-	ss << setw(4) << setfill('0') << ToHex(Len);
-	temp = HexToStr(ss.str());
-	for (int i = 0; i < 2; i++)
-		len[i] = temp[i];
+	len[0] = 0x00;
+	len[1] = HexToStr(ToHex(cursor))[0];
 	Crc16();
 }
 
 int LED::getlen()
 {
-	return length;
+	return cursor+11;
 }
 
 void LED::ColoredDisplay()
 {
 	Init();
 	com = COM_COLORED_DISPLAY;
-	string temp;
-	stringstream ss;
+	char temp;
 	cout << "请输入行号: (3/4)";
 	cin >> temp;
-	ss << setw(2) << setfill('0') << temp;
-	temp = HexToStr(ss.str());
-	data[cursor++] = temp[0];
-	ss.clear();
-	ss.str("");
+	data[cursor++] = temp - '0';
 	cout << "请输入显示时间 (0-255) : ";
 	int time;
 	cin >> time;
-	temp = HexToStr(ToHex(time));
-	data[cursor++] = temp[0];
-	ss.clear();
-	ss.str("");
+	data[cursor++] = HexToStr(ToHex(time))[0];
 	cout << "请输入字体颜色 (1 - 红色, 2 - 绿色, 3 - 黄色) :";
 	cin >> temp;
-	ss << setw(2) << setfill('0') << temp<<"00";
-	temp = HexToStr(temp);
-	for (int i = 0; i < 2; i++)
-		data[cursor++] = temp[i];
-	ss.clear();
-	ss.str("");
+	data[cursor++] = temp - '0';
+	data[cursor++] = 0x00;
 	cout << "请输入显示内容: ";
 	BYTE* context = new BYTE[MAX_DATA_LEN];
 	cin >> context;
@@ -280,7 +238,7 @@ void LED::ColoredDisplay()
 		data[cursor++] = context[j];
 	}
 	delete[]context;
-	LengthAndCrc(cursor);
+	LengthAndCrc();
 }
 
 void LED::CancelDisplay()
@@ -297,132 +255,101 @@ void LED::CancelDisplay()
 		cin >> i;
 	}
 	data[cursor++] = line[i];
-	LengthAndCrc(cursor);
+	LengthAndCrc();
 }
 
 void LED::TimeDisplay()
 {
 	Init();
 	com = COM_TIME_DISPLAY;
-	string temp;
-	stringstream ss;
+	char temp;
 	cout << "请输入行号 (0/3/4, 0为不显示时间) : ";
 	cin >> temp;
-	ss << setw(2) << setfill('0') << temp;
-	temp = HexToStr(ss.str());
-	data[cursor++] = temp[0];
-	ss.clear();
-	ss.str("");
+	data[cursor++] = temp - '0';
 	cout << "请输入字体颜色 (1 - 红色, 2 - 绿色, 3 - 黄色) :";
 	cin >> temp;
-	ss << setw(2) << setfill('0') << temp << "00";
-	temp = HexToStr(ss.str());
-	for (int i = 0; i < 2; i++)
-		data[cursor++] = temp[i];
-	LengthAndCrc(cursor);
+	data[cursor++] = temp - '0';
+	data[cursor++] = 0x00;
+	LengthAndCrc();
 }
 
 void LED::SetTime()
 {
 	Init();
 	com = COM_SET_TIME;
-	int date[6];
+	int date;
 	cout << "请输入日期 (年月日时分秒, 年+2000即为年份) : ";
 	for (int i = 0; i < 6; i++)
 	{
-		cin >> date[i];
-		string temp = HexToStr(ToHex(date[i]));
-		data[cursor++] = temp[0];
+		cin >> date;
+		data[cursor++] = HexToStr(ToHex(date))[0];
 	}
-	LengthAndCrc(cursor);
+	LengthAndCrc();
 }
 
 void LED::SetCharColor()
 {
 	Init();
 	com = COM_CHAR_COLOR;
-	string temp;
-	stringstream ss;
+	char temp;
 	cout << "请输入行号 (3/4) : ";
 	cin >> temp;
-	ss << setw(2) << setfill('0') << temp;
-	temp = HexToStr(ss.str());
-	data[cursor++] = temp[0];
-	int color[8];
+	data[cursor++] = temp - '0';
+	int color;
 	cout << "请输入每个字节的颜色 (1 - 红色, 2 - 绿色, 3 - 黄色) : ";
 	for (int i = 0; i < 8; i++)
 	{
-		cin >> color[i];
-		temp = HexToStr(ToHex(color[i]));
-		data[cursor++] = temp[0];
+		cin >> color;
+		data[cursor++] = HexToStr(ToHex(color))[0];
 	}
-	LengthAndCrc(cursor);
+	LengthAndCrc();
 }
 
 void LED::LineColorTrans()
 {
 	Init();
 	com = COM_LINE_COLOR;
-	string temp;
-	stringstream ss;
+	char temp;
 	cout << "请输入行号 (3/4) : ";
 	cin >> temp;
-	ss << setw(2) << setfill('0') << temp;
-	temp = HexToStr(ss.str());
-	data[cursor++] = temp[0];
-	LengthAndCrc(cursor);
+	data[cursor++] = temp - '0';
+	LengthAndCrc();
 }
 
 void LED::CharColorTrans()
 {
 	Init();
 	com = COM_COLOR_CHANGE;
-	string temp;
-	stringstream ss;
+	char temp;
 	cout << "请输入行号 (3/4) : ";
 	cin >> temp;
-	ss << setw(2) << setfill('0') << temp;
-	temp = HexToStr(ss.str());
-	data[cursor++] = temp[0];
-	int color[2];
+	data[cursor++] = temp - '0';
+	int color;
 	cout << "请输入前景色和背景色 (1 - 红色, 2 - 绿色, 3 - 黄色) : ";
 	for (int i = 0; i < 2; i++)
 	{
-		cin >> color[i];
-		temp = HexToStr(ToHex(color[i]));
-		data[cursor++] = temp[0];
+		cin >> color;
+		data[cursor++] = HexToStr(ToHex(color))[0];
 	}
-	LengthAndCrc(cursor);
+	LengthAndCrc();
 }
 
 void LED::TimingDisplay()
 {
 	Init();
 	com = COM_TIMING_DISPLAY;
-	string temp;
-	stringstream ss;
+	char temp;
 	cout << "请输入行号: (3/4)";
 	cin >> temp;
-	ss << setw(2) << setfill('0') << temp;
-	temp = HexToStr(ss.str());
-	data[cursor++] = temp[0];
-	ss.clear();
-	ss.str("");
+	data[cursor++] = temp - '0';
 	cout << "请输入显示时间 (0-255) : ";
 	int time;
 	cin >> time;
-	temp = HexToStr(ToHex(time));
-	data[cursor++] = temp[0];
-	ss.clear();
-	ss.str("");
+	data[cursor++] = HexToStr(ToHex(time))[0];
 	cout << "请输入字体颜色 (1 - 红色, 2 - 绿色, 3 - 黄色) :";
 	cin >> temp;
-	ss << setw(2) << setfill('0') << temp<<"00";
-	temp = HexToStr(ss.str());
-	for (int i = 0; i < 2; i++)
-		data[cursor++] = temp[i];
-	ss.clear();
-	ss.str("");
+	data[cursor++] = temp - '0';
+	data[cursor++] = 0x00;
 	cout << "请输入显示内容: ";
 	BYTE* context = new BYTE[MAX_DATA_LEN];
 	cin >> context;
@@ -431,20 +358,17 @@ void LED::TimingDisplay()
 		data[cursor++] = context[j];
 	}
 	delete[]context;
-	LengthAndCrc(cursor);
+	LengthAndCrc();
 }
 
 void LED::SetAdChangeMode()
 {
 	Init();
 	com = COM_ADPAGE_CHANGE;
-	string temp;
-	stringstream ss;
+	char temp;
 	cout << "请输入行号: (3/4)";
 	cin >> temp;
-	ss << setw(2) << setfill('0') << temp;
-	temp = HexToStr(ss.str());
-	data[cursor++] = temp[0];
+	data[cursor++] = temp - '0';
 	char mode[] = {
 		0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,0x10,0x11,0x12,0x13
 	};
@@ -472,5 +396,5 @@ void LED::SetAdChangeMode()
 	int i;
 	cin >> i;
 	data[cursor++] = mode[i];
-	LengthAndCrc(cursor);
+	LengthAndCrc();
 }
