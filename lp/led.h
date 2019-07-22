@@ -1,18 +1,16 @@
 #pragma once
 #include "SerialPort.h"
+
+typedef unsigned char BYTE;
+
+const unsigned char CTRL_HEADER[2] = { 0xAA,0x55 };
+const unsigned char CTRL_RESERVED[3] = { 0x01,0x02,0x03 };
+const unsigned char CTRL_END = 0xAF;
+
+const unsigned char MAX_DATA_LEN = 255;
+
 class LED {
 public:
-	LED()
-	{
-		char h[2] = { 0xAA,0x55 };
-		head.assign(h,0,2);
-		char r[2] = { 0x03,0x64};
-		reserved.assign(r,0,2);
-		char t = 0x00;
-		reserved.push_back(t);
-		char e[] = { 0xAF };
-		end.assign(e,0,1);
-	}
 	bool ShowCommand();
 	void SetTime();
 	void SetAd();
@@ -27,25 +25,30 @@ public:
 	void CharColorTrans();
 	std::string StringToHex(std::string str);
 	std::string HexToStr(std::string str);
-	std::string Assemble();
+	BYTE* Assemble();
 	void Crc16();
-	void LengthAndCrc();
+	void LengthAndCrc(int Len);
 	std::string ToHex(int dec);
+	int getlen();
 private:
-	unsigned char command[10] =
-	{
-		0x10,0x25,					//0 - 设置时间	1 - 设置广告
-		0x26,0x21,					//2 - 彩色显示	3 - 取消显示
-		0x27,0xF6,					//4 - 定时显示	5 - 时间显示
-		0x51,0x53,					//6 - 广告换页	7 - 字符颜色
-		0x54,0x55					//8 - 行色变换	9 - 字色变换
-	};
-	string head;
-	string reserved;
-	string com;
-	string len;
-	string data;
-	string checksum;
-	string end;
+	BYTE com;
+	BYTE len[2];
+	BYTE* data;
+	BYTE checksum[2];
+	int length;
+	int cursor;
+};
 
+enum Command
+{
+	COM_SET_TIME			 = 0x10,
+	COM_SET_AD				 = 0x25,
+	COM_COLORED_DISPLAY		 = 0x26,
+	COM_CANCEL_DISPLAY		 = 0x21,
+	COM_TIMING_DISPLAY		 = 0x27,
+	COM_TIME_DISPLAY		 = 0xF6,
+	COM_ADPAGE_CHANGE		 = 0x51,
+	COM_CHAR_COLOR			 = 0x53,
+	COM_LINE_COLOR			 = 0x54,
+	COM_COLOR_CHANGE		 = 0x55
 };
