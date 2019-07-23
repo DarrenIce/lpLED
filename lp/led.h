@@ -38,13 +38,12 @@ public:
 	void LineColorTrans();
 	void CharColorTrans();
 	std::string HexToStr(std::string str);
-	void PackageCommand(Command com);
+	void PackageCommand(Command com, BYTE* data);
 	BYTE* GetPackage();
 	BYTE* Crc16(BYTE* buffer,int size);
 	std::string ToHex(int dec);
 	int getlen();
 private:
-	BYTE* data;
 	BYTE* package;
 	int cursor;
 };
