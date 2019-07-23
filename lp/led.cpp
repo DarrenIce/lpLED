@@ -52,13 +52,7 @@ static const unsigned char aucCRCLo[] =
 	0x41, 0x81, 0x80, 0x40
 };
 
-void LED::Init()
-{
-	cursor = 0;
-	package = new BYTE[MAX_DATA_LEN];
-}
-
-bool LED::ShowCommand()
+bool LED::ShowCommand(BYTE* buffer, int *size)
 {
 	int i = 0;
 	system("cls");
@@ -73,43 +67,43 @@ bool LED::ShowCommand()
 	switch (i)
 	{
 	case 0:
-		SetTime();
+		SetTime(buffer, size);
 		return true;
 	case 1:
-		SetAd();
+		SetAd(buffer, size);
 		return true;
 	case 2:
-		ColoredDisplay();
+		ColoredDisplay(buffer, size);
 		return true;
 	case 3:
-		CancelDisplay();
+		CancelDisplay(buffer, size);
 		return true;
 	case 4:
-		TimingDisplay();
+		TimingDisplay(buffer, size);
 		return true;
 	case 5:
-		TimeDisplay();
+		TimeDisplay(buffer, size);
 		return true;
 	case 6:
-		SetAdChangeMode();
+		SetAdChangeMode(buffer, size);
 		return true;
 	case 7:
-		SetCharColor();
+		SetCharColor(buffer, size);
 		return true;
 	case 8:
-		LineColorTrans();
+		LineColorTrans(buffer, size);
 		return true;
 	case 9:
-		CharColorTrans();
+		CharColorTrans(buffer, size);
 		return true;
 	default:
 		return false;
 	}
 }
 
-void LED::SetAd()
+void LED::SetAd(BYTE* buffer, int *size)
 {
-	Init();
+	int cursor = 0;
 	BYTE* data = new BYTE[MAX_DATA_LEN];
 	char temp;
 	cout << "请输入行号: (3/4)";
@@ -127,14 +121,12 @@ void LED::SetAd()
 		cout << "请输入广告内容: ";
 		BYTE* context = new BYTE[MAX_DATA_LEN];
 		cin >> context;
-		for (int j = 0; j < strlen((char*)context);j++)
-		{
-			data[cursor++] = context[j];
-			
-		}
+		memcpy(data + cursor, context, strlen((const char*)context));
+		cursor += strlen((const char*)context);
 		delete[]context;
 	}
-	PackageCommand(COM_SET_AD,data);
+	PackageCommand(COM_SET_AD, data, cursor, buffer, size);
+	delete[]data;
 }
 
 string LED::HexToStr(string str)
@@ -149,20 +141,28 @@ string LED::HexToStr(string str)
 	return result;
 }
 
-void LED::PackageCommand(Command com, BYTE* data)
+void LED::PackageCommand(Command com, BYTE* data, int cursor, BYTE* buffer, int *size)
 {
 	BYTE *temp = new BYTE[MAX_DATA_LEN];
 	BYTE len[2] = { 0x00,HexToStr(ToHex(cursor))[0] };
+	// 拼包头
 	memcpy(temp, CTRL_HEADER, 2);
+	// 拼保留字
 	memcpy(temp + 2, CTRL_RESERVED, 3);
+	// 拼命令
 	temp[5] = com;
+	// 拼长度
 	memcpy(temp + 6, len, 2);
+	// 拼数据
 	memcpy(temp + 8, data, cursor);
 	BYTE t[2] = { 0x00,0x00 };
 	memcpy(temp + 8 + cursor, t, 2);
+	// 拼校验和
 	memcpy(temp + 8 + cursor, Crc16(temp + 2, cursor + 8), 2);
+	// 拼结束标志符
 	temp[cursor+10] = CTRL_END;
-	memcpy(package, temp, cursor + 11);
+	*size = cursor + 11;
+	memcpy(buffer, temp, cursor + 11);
 }
 
 BYTE* LED::Crc16(BYTE* buffer, int size)
@@ -179,11 +179,6 @@ BYTE* LED::Crc16(BYTE* buffer, int size)
 	return temp;
 }
 
-BYTE* LED::GetPackage()
-{
-	return package;
-}
-
 string LED::ToHex(int dec)
 {
 	string res;
@@ -193,14 +188,9 @@ string LED::ToHex(int dec)
 	return res;
 }
 
-int LED::getlen()
+void LED::ColoredDisplay(BYTE* buffer, int *size)
 {
-	return cursor+11;
-}
-
-void LED::ColoredDisplay()
-{
-	Init();
+	int cursor = 0;
 	BYTE* data = new BYTE[MAX_DATA_LEN];
 	char temp;
 	cout << "请输入行号: (3/4)";
@@ -217,18 +207,16 @@ void LED::ColoredDisplay()
 	cout << "请输入显示内容: ";
 	BYTE* context = new BYTE[MAX_DATA_LEN];
 	cin >> context;
-	for (int j = 0; j < strlen((char*)context); j++)
-	{
-		data[cursor++] = context[j];
-		
-	}
+	memcpy(data + cursor, context, strlen((const char*)context));
+	cursor += strlen((const char*)context);
 	delete[]context;
-	PackageCommand(COM_COLORED_DISPLAY,data);
+	PackageCommand(COM_COLORED_DISPLAY, data, cursor, buffer, size);
+	delete[]data;
 }
 
-void LED::CancelDisplay()
+void LED::CancelDisplay(BYTE* buffer, int *size)
 {
-	Init();
+	int cursor = 0;
 	BYTE* data = new BYTE[MAX_DATA_LEN];
 	cout << "请输入要取消的行号: (3/4)";
 	int i;
@@ -240,12 +228,13 @@ void LED::CancelDisplay()
 		cin >> i;
 	}
 	data[cursor++] = line[i];
-	PackageCommand(COM_CANCEL_DISPLAY,data);
+	PackageCommand(COM_CANCEL_DISPLAY,data, cursor, buffer, size);
+	delete[]data;
 }
 
-void LED::TimeDisplay()
+void LED::TimeDisplay(BYTE* buffer, int *size)
 {
-	Init();
+	int cursor = 0;
 	BYTE* data = new BYTE[MAX_DATA_LEN];
 	char temp;
 	cout << "请输入行号 (0/3/4, 0为不显示时间) : ";
@@ -255,12 +244,13 @@ void LED::TimeDisplay()
 	cin >> temp;
 	data[cursor++] = temp - '0';
 	data[cursor++] = 0x00;
-	PackageCommand(COM_TIME_DISPLAY,data);
+	PackageCommand(COM_TIME_DISPLAY,data, cursor, buffer, size);
+	delete[]data;
 }
 
-void LED::SetTime()
+void LED::SetTime(BYTE* buffer, int *size)
 {
-	Init();
+	int cursor = 0;
 	BYTE* data = new BYTE[MAX_DATA_LEN];
 	int date;
 	cout << "请输入日期 (年月日时分秒, 年+2000即为年份) : ";
@@ -269,12 +259,13 @@ void LED::SetTime()
 		cin >> date;
 		data[cursor++] = HexToStr(ToHex(date))[0];
 	}
-	PackageCommand(COM_SET_TIME,data);
+	PackageCommand(COM_SET_TIME,data, cursor, buffer, size);
+	delete[]data;
 }
 
-void LED::SetCharColor()
+void LED::SetCharColor(BYTE* buffer, int *size)
 {
-	Init();
+	int cursor = 0;
 	BYTE* data = new BYTE[MAX_DATA_LEN];
 	char temp;
 	cout << "请输入行号 (3/4) : ";
@@ -287,23 +278,25 @@ void LED::SetCharColor()
 		cin >> color;
 		data[cursor++] = HexToStr(ToHex(color))[0];
 	}
-	PackageCommand(COM_CHAR_COLOR,data);
+	PackageCommand(COM_CHAR_COLOR,data, cursor, buffer, size);
+	delete[]data;
 }
 
-void LED::LineColorTrans()
+void LED::LineColorTrans(BYTE* buffer, int *size)
 {
-	Init();
+	int cursor = 0;
 	BYTE* data = new BYTE[MAX_DATA_LEN];
 	char temp;
 	cout << "请输入行号 (3/4) : ";
 	cin >> temp;
 	data[cursor++] = temp - '0';
-	PackageCommand(COM_LINE_COLOR,data);
+	PackageCommand(COM_LINE_COLOR,data, cursor, buffer, size);
+	delete[]data;
 }
 
-void LED::CharColorTrans()
+void LED::CharColorTrans(BYTE* buffer, int *size)
 {
-	Init();
+	int cursor = 0;
 	BYTE* data = new BYTE[MAX_DATA_LEN];
 	char temp;
 	cout << "请输入行号 (3/4) : ";
@@ -316,12 +309,13 @@ void LED::CharColorTrans()
 		cin >> color;
 		data[cursor++] = HexToStr(ToHex(color))[0];
 	}
-	PackageCommand(COM_COLOR_CHANGE,data);
+	PackageCommand(COM_COLOR_CHANGE,data, cursor, buffer, size);
+	delete[]data;
 }
 
-void LED::TimingDisplay()
+void LED::TimingDisplay(BYTE* buffer, int *size)
 {
-	Init();
+	int cursor = 0;
 	BYTE* data = new BYTE[MAX_DATA_LEN];
 	char temp;
 	cout << "请输入行号: (3/4)";
@@ -338,17 +332,16 @@ void LED::TimingDisplay()
 	cout << "请输入显示内容: ";
 	BYTE* context = new BYTE[MAX_DATA_LEN];
 	cin >> context;
-	for (int j = 0; j < strlen((char*)context); j++)
-	{
-		data[cursor++] = context[j];
-	}
+	memcpy(data + cursor, context, strlen((const char*)context));
+	cursor += strlen((const char*)context);
 	delete[]context;
-	PackageCommand(COM_TIMING_DISPLAY,data);
+	PackageCommand(COM_TIMING_DISPLAY,data, cursor, buffer, size);
+	delete[]data;
 }
 
-void LED::SetAdChangeMode()
+void LED::SetAdChangeMode(BYTE* buffer, int *size)
 {
-	Init();
+	int cursor = 0;
 	BYTE* data = new BYTE[MAX_DATA_LEN];
 	char temp;
 	cout << "请输入行号: (3/4)";
@@ -381,5 +374,6 @@ void LED::SetAdChangeMode()
 	int i;
 	cin >> i;
 	data[cursor++] = mode[i];
-	PackageCommand(COM_ADPAGE_CHANGE,data);
+	PackageCommand(COM_ADPAGE_CHANGE,data, cursor, buffer, size);
+	delete[]data;
 }

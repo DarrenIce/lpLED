@@ -3,7 +3,8 @@ using namespace std;
 int _tmain(int argc, _TCHAR* argv[])
 {
 	CSerialPort mySerialPort;//首先将之前定义的类实例化
-	int length = 16;//定义传输的长度
+	BYTE* buffer = new BYTE[MAX_DATA_LEN];
+	int size = 0;
 	LED led;
 	string temp;
 
@@ -23,11 +24,12 @@ int _tmain(int argc, _TCHAR* argv[])
 	{
 		std::cout << "OpenListenThread success !" << std::endl;
 	}
-	while (led.ShowCommand())
+	while (led.ShowCommand(buffer,&size))
 	{
-		cout << mySerialPort.WriteData(led.GetPackage(), led.getlen()) << endl;//这个函数就是给串口发送数据的函数，temp就是要发送的数组。
+		cout << mySerialPort.WriteData(buffer, size) << endl;//这个函数就是给串口发送数据的函数，temp就是要发送的数组。
 		cout << mySerialPort.GetBytesInCOM() << endl;//这个函数就是显示返回值函数
 	}
+	delete[]buffer;
 	system("pause");
 	return 0;
 }
