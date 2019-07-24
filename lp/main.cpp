@@ -24,8 +24,9 @@ int _tmain(int argc, _TCHAR* argv[])
 	{
 		std::cout << "OpenListenThread success !" << std::endl;
 	}
-	while (led.ShowCommand(buffer,&size))
+	while (led.ShowCommand())
 	{
+		led.Send(buffer,&size);
 		cout << mySerialPort.WriteData(buffer, size) << endl;//这个函数就是给串口发送数据的函数，temp就是要发送的数组。
 		cout << mySerialPort.GetBytesInCOM() << endl;//这个函数就是显示返回值函数
 	}

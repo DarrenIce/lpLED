@@ -7,7 +7,7 @@ const unsigned char CTRL_HEADER[2] = { 0xAA,0x55 };			//传输头
 const unsigned char CTRL_RESERVED[3] = { 0x01,0x02,0x03 };	//保留字
 const unsigned char CTRL_END = 0xAF;						//结束标志符
 
-const unsigned char MAX_DATA_LEN = 255;						//报文最大长度
+const unsigned int MAX_DATA_LEN = 1040;						//报文最大长度
 
 enum Command
 {
@@ -25,20 +25,24 @@ enum Command
 
 class LED {
 public:
-	bool ShowCommand(BYTE* buffer, int *size);			//显示命令
-	void SetTime(BYTE* buffer, int *size);				//设置时间
-	void SetAd(BYTE* buffer, int *size);				//设置彩色广告
-	void ColoredDisplay(BYTE* buffer, int *size);		//彩色显示
-	void CancelDisplay(BYTE* buffer, int *size);		//取消显示
-	void TimingDisplay(BYTE* buffer, int *size);		//带定时的彩色显示
-	void TimeDisplay(BYTE* buffer, int *size);			//设置时间显示模式
-	void SetAdChangeMode(BYTE* buffer, int *size);		//设置广告换页模式
-	void SetCharColor(BYTE* buffer, int *size);			//设置字符颜色
-	void LineColorTrans(BYTE* buffer, int *size);		//设置行颜色变换
-	void CharColorTrans(BYTE* buffer, int *size);		//设置字符颜色变换
-	std::string HexToStr(std::string str);
+	LED();
+	bool ShowCommand();																	//显示命令
+	void SetTime(int* date);															//设置时间
+	void SetAd(BYTE line_num, BYTE color, BYTE* context);								//设置彩色广告
+	void ColoredDisplay(BYTE line_num, BYTE time, BYTE color, BYTE* context);			//彩色显示
+	void CancelDisplay(BYTE line_num);													//取消显示
+	void TimingDisplay(BYTE line_num, BYTE time, BYTE color, BYTE* context);			//带定时的彩色显示
+	void TimeDisplay(BYTE line_num, BYTE color);										//设置时间显示模式
+	void SetAdChangeMode(BYTE line_num,BYTE mode);										//设置广告换页模式
+	void SetCharColor(BYTE line_num, int *color);										//设置字符颜色
+	void LineColorTrans(BYTE line_num);													//设置行颜色变换
+	void CharColorTrans(BYTE line_num, int *color);										//设置字符颜色变换
 	void PackageCommand(Command com, BYTE* data, int cursor, BYTE* buffer, int *size);	//打包函数
-	BYTE* Crc16(BYTE* buffer,int size);					//crc16校验
-	std::string ToHex(int dec);
+	BYTE* Crc16(BYTE* buffer,int size);													//Crc16校验，查表法计算校验和
+	void Send(BYTE* buf,int* len);
+	~LED();
+private:
+	BYTE* buffer;
+	int size;
 };
 
