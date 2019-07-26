@@ -28,21 +28,21 @@ public:
 	LED();
 	bool ShowCommand();																	//显示命令
 	void SetTime(int* date);															//设置时间
-	void SetAd(BYTE line_num, BYTE color, BYTE* context);								//设置彩色广告
-	void ColoredDisplay(BYTE line_num, BYTE time, BYTE color, BYTE* context);			//彩色显示
+	void SetAd(BYTE line_num, BYTE color, string context);								//设置彩色广告
+	void ColoredDisplay(BYTE line_num, BYTE time, BYTE color, string context);			//彩色显示
 	void CancelDisplay(BYTE line_num);													//取消显示
-	void TimingDisplay(BYTE line_num, BYTE time, BYTE color, BYTE* context);			//带定时的彩色显示
+	void TimingDisplay(BYTE line_num, BYTE time, BYTE color, string context);			//带定时的彩色显示
 	void TimeDisplay(BYTE line_num, BYTE color);										//设置时间显示模式
 	void SetAdChangeMode(BYTE line_num,BYTE mode);										//设置广告换页模式
 	void SetCharColor(BYTE line_num, int *color);										//设置字符颜色
 	void LineColorTrans(BYTE line_num);													//设置行颜色变换
 	void CharColorTrans(BYTE line_num, int *color);										//设置字符颜色变换
-	void PackageCommand(Command com, BYTE* data, int cursor, BYTE* buffer, int *size);	//打包函数
-	BYTE* Crc16(BYTE* buffer,int size);													//Crc16校验，查表法计算校验和
-	void Send(BYTE* buf,int* len);
+	void PackageCommand(Command com, BYTE* data, int cursor, BYTE* buffer, int* length);//打包函数
+	void Crc16(BYTE* buffer,int size, BYTE* crc);													//Crc16校验，查表法计算校验和
+	void Send(BYTE* buffer,int* size);
 	~LED();
 private:
-	BYTE* buffer;
-	int size;
+	BYTE* buffer_;
+	int size_;
 };
 

@@ -54,12 +54,12 @@ static const unsigned char aucCRCLo[] =
 
 LED::LED()
 {
-	buffer = new BYTE[MAX_DATA_LEN];
+	buffer_ = new BYTE[MAX_DATA_LEN];
 }
 
 LED::~LED()
 {
-	delete[]buffer;
+	delete[]buffer_;
 }
 
 bool LED::ShowCommand()
@@ -67,7 +67,7 @@ bool LED::ShowCommand()
 	int i = 0, t;
 	char temp;
 	BYTE line_num, color, time, mod;
-	BYTE* context = new BYTE[MAX_DATA_LEN];
+	string context;
 	int color2[8], color3[2], date[6];
 	char mode[] = {
 			0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,0x10,0x11,0x12,0x13
@@ -108,7 +108,6 @@ bool LED::ShowCommand()
 			cin >> context;
 		}
 		SetAd(line_num, color, context);
-		delete[]context;
 		return true;
 	case 2:
 		cout << "请输入行号: (3/4)";
@@ -123,7 +122,6 @@ bool LED::ShowCommand()
 		cout << "请输入显示内容: ";
 		cin >> context;
 		ColoredDisplay(line_num,time,color,context);
-		delete[]context;
 		return true;
 	case 3:
 		cout << "请输入要取消的行号: (3/4)";
@@ -148,7 +146,6 @@ bool LED::ShowCommand()
 		cout << "请输入显示内容: ";
 		cin >> context;
 		TimingDisplay(line_num, time, color, context);
-		delete[]context;
 		return true;
 	case 5:
 		cout << "请输入行号 (0/3/4, 0为不显示时间) : ";
@@ -221,26 +218,26 @@ bool LED::ShowCommand()
 	}
 }
 
-void LED::SetAd(BYTE line_num, BYTE color, BYTE* context)
+void LED::SetAd(BYTE line_num, BYTE color, string context)
 {
-	int size1 = 0;
+	int size = 0;
 	BYTE* data = new BYTE[MAX_DATA_LEN];
-	data[size1++] = line_num;
-	data[size1++] = color;
-	data[size1++] = 0x00;
+	data[size++] = line_num;
+	data[size++] = color;
+	data[size++] = 0x00;
 	if (context[0]!=0x00)
 	{
-		memcpy(data + size1, context, strlen((const char*)context));
-		size1 += strlen((const char*)context);
+		memcpy(data + size, context.c_str(), context.size());
+		size += context.size();
 	}
-	PackageCommand(COM_SET_AD, data, size1, buffer, &size);
+	PackageCommand(COM_SET_AD, data, size, buffer_, &size_);
 	delete[]data;
 }
 
-void LED::PackageCommand(Command com, BYTE* data, int size1, BYTE* buffer, int *size)
+void LED::PackageCommand(Command com, BYTE* data, int size, BYTE* buffer, int *length)
 {
 	BYTE* cursor = buffer;
-	BYTE len[2] = { size1/255,size1%255 };
+	BYTE len[2] = { size>>8,size<<8>>8 };
 	// 拼包头
 	memcpy(cursor, CTRL_HEADER, 2);
 	// 拼保留字
@@ -254,20 +251,20 @@ void LED::PackageCommand(Command com, BYTE* data, int size1, BYTE* buffer, int *
 	memcpy(cursor, len, 2);
 	// 拼数据
 	cursor += 2;
-	memcpy(cursor, data, size1);
-	BYTE t[2] = { 0x00,0x00 };
-	cursor += size1;
-	memcpy(cursor, t, 2);
+	memcpy(cursor, data, size);
 	// 拼校验和
-	BYTE *tt = Crc16(buffer + 2, size1 + 8);
-	memcpy(cursor, tt, 2);
+	BYTE t[2] = { 0x00,0x00 };
+	cursor += size;
+	memcpy(cursor, t, 2);
+	Crc16(buffer + 2, size + 8, t);
+	memcpy(cursor, t, 2);
 	// 拼结束标志符
 	cursor += 2;
 	*cursor = CTRL_END;
-	*size = size1 + 11;
+	*length = size + 11;
 }
 
-BYTE* LED::Crc16(BYTE* buffer, int size)
+void LED::Crc16(BYTE* buffer, int size, BYTE* crc)
 {
 	unsigned char temp_high = 0xFF, temp_low = 0xFF;
 	int index = 0;
@@ -277,117 +274,117 @@ BYTE* LED::Crc16(BYTE* buffer, int size)
 		temp_low = temp_high ^ aucCRCHi[index];
 		temp_high = aucCRCLo[index];
 	}
-	BYTE temp[2] = { temp_high,temp_low };
-	return temp;
+	crc[0] = temp_high;
+	crc[1] = temp_low;
 }
 
-void LED::ColoredDisplay(BYTE line_num, BYTE time, BYTE color, BYTE* context)
+void LED::ColoredDisplay(BYTE line_num, BYTE time, BYTE color, string context)
 {
-	int size1 = 0;
+	int size = 0;
 	BYTE* data = new BYTE[MAX_DATA_LEN];
-	data[size1++] = line_num;
-	data[size1++] = time;
-	data[size1++] = color;
-	data[size1++] = 0x00;
-	memcpy(data + size1, context, strlen((const char*)context));
-	size1 += strlen((const char*)context);
-	PackageCommand(COM_COLORED_DISPLAY, data, size1, buffer, &size);
+	data[size++] = line_num;
+	data[size++] = time;
+	data[size++] = color;
+	data[size++] = 0x00;
+	memcpy(data + size, context.c_str(), context.size());
+	size += context.size();
+	PackageCommand(COM_COLORED_DISPLAY, data, size, buffer_, &size_);
 	delete[]data;
 }
 
 void LED::CancelDisplay(BYTE line_num)
 {
-	int size1 = 0;
+	int size = 0;
 	BYTE* data = new BYTE[MAX_DATA_LEN];
-	data[size1++] = line_num;
-	PackageCommand(COM_CANCEL_DISPLAY,data, size1, buffer, &size);
+	data[size++] = line_num;
+	PackageCommand(COM_CANCEL_DISPLAY,data, size, buffer_, &size_);
 	delete[]data;
 }
 
 void LED::TimeDisplay(BYTE line_num, BYTE color)
 {
-	int size1 = 0;
+	int size = 0;
 	BYTE* data = new BYTE[MAX_DATA_LEN];
-	data[size1++] = line_num;
-	data[size1++] = color;
-	data[size1++] = 0x00;
-	PackageCommand(COM_TIME_DISPLAY,data, size1, buffer, &size);
+	data[size++] = line_num;
+	data[size++] = color;
+	data[size++] = 0x00;
+	PackageCommand(COM_TIME_DISPLAY,data, size, buffer_, &size_);
 	delete[]data;
 }
 
 void LED::SetTime(int* date)
 {
-	int size1 = 0;
+	int size = 0;
 	BYTE* data = new BYTE[MAX_DATA_LEN];
 	for (int i = 0; i < 6; i++)
 	{
-		data[size1++] = date[i];
+		data[size++] = date[i];
 	}
-	PackageCommand(COM_SET_TIME,data, size1, buffer, &size);
+	PackageCommand(COM_SET_TIME,data, size, buffer_, &size_);
 	delete[]data;
 }
 
 void LED::SetCharColor(BYTE line_num, int *color)
 {
-	int size1 = 0;
+	int size = 0;
 	BYTE* data = new BYTE[MAX_DATA_LEN];
-	data[size1++] = line_num;
+	data[size++] = line_num;
 	for (int i = 0; i < 8; i++)
 	{
-		data[size1++] = color[i];
+		data[size++] = color[i];
 	}
-	PackageCommand(COM_CHAR_COLOR,data, size1, buffer, &size);
+	PackageCommand(COM_CHAR_COLOR,data, size, buffer_, &size_);
 	delete[]data;
 }
 
 void LED::LineColorTrans(BYTE line_num)
 {
-	int size1 = 0;
+	int size = 0;
 	BYTE* data = new BYTE[MAX_DATA_LEN];
-	data[size1++] = line_num;
-	PackageCommand(COM_LINE_COLOR,data, size1, buffer, &size);
+	data[size++] = line_num;
+	PackageCommand(COM_LINE_COLOR,data, size, buffer_, &size_);
 	delete[]data;
 }
 
 void LED::CharColorTrans(BYTE line_num, int *color)
 {
-	int size1 = 0;
+	int size = 0;
 	BYTE* data = new BYTE[MAX_DATA_LEN];
-	data[size1++] = line_num;
+	data[size++] = line_num;
 	for (int i = 0; i < 2; i++)
 	{
-		data[size1++] = color[i];
+		data[size++] = color[i];
 	}
-	PackageCommand(COM_COLOR_CHANGE,data, size1, buffer, &size);
+	PackageCommand(COM_COLOR_CHANGE,data, size, buffer_, &size_);
 	delete[]data;
 }
 
-void LED::TimingDisplay(BYTE line_num, BYTE time, BYTE color, BYTE* context)
+void LED::TimingDisplay(BYTE line_num, BYTE time, BYTE color, string context)
 {
-	int size1 = 0;
+	int size = 0;
 	BYTE* data = new BYTE[MAX_DATA_LEN];
-	data[size1++] = line_num;
-	data[size1++] = time;
-	data[size1++] = color;
-	data[size1++] = 0x00;
-	memcpy(data + size1, context, strlen((const char*)context));
-	size1 += strlen((const char*)context);
-	PackageCommand(COM_TIMING_DISPLAY,data, size1, buffer, &size);
+	data[size++] = line_num;
+	data[size++] = time;
+	data[size++] = color;
+	data[size++] = 0x00;
+	memcpy(data + size, context.c_str(), context.size());
+	size += context.size();
+	PackageCommand(COM_TIMING_DISPLAY,data, size, buffer_, &size_);
 	delete[]data;
 }
 
 void LED::SetAdChangeMode(BYTE line_num,BYTE mode)
 {
-	int size1 = 0;
+	int size = 0;
 	BYTE* data = new BYTE[MAX_DATA_LEN];
-	data[size1++] = line_num;
-	data[size1++] = mode;
-	PackageCommand(COM_ADPAGE_CHANGE,data, size1, buffer, &size);
+	data[size++] = line_num;
+	data[size++] = mode;
+	PackageCommand(COM_ADPAGE_CHANGE,data, size, buffer_, &size_);
 	delete[]data;
 }
 
-void LED::Send(BYTE* buf, int* len)
+void LED::Send(BYTE* buffer, int* size)
 {
-	memcpy(buf, buffer, size);
-	*len = size;
+	memcpy(buffer, buffer_, size_);
+	*size = size_;
 }
