@@ -2,10 +2,10 @@
 #include "SerialPort.h"
 
 int _tmain(int argc, _TCHAR* argv[]) {
-  lp::serialport::CSerialPort mySerialPort;
-  BYTE* buffer = new BYTE[lp::led::kMaxDataLen];
+  serialport::CSerialPort mySerialPort;
+  BYTE* buffer = new BYTE[led::kMaxDataLen];
   int size = 0;
-  lp::led::Led led;
+  led::Led led;
   std::string temp;
 
   if (!mySerialPort.InitPort(3, CBR_9600, 'N', 8, 1, EV_RXCHAR)) {

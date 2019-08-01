@@ -1,5 +1,4 @@
 #include "led.h"
-namespace lp {
 namespace led {
 
 static constexpr unsigned char kCrcHi[] = {
@@ -490,4 +489,3 @@ void Led::Send(BYTE* buffer, int* size) {
   *size = size_;
 }
 }  // namespace led
-}  // namespace lp

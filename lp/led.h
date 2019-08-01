@@ -3,14 +3,13 @@
 
 #include <iostream>
 #include <string>
-namespace lp {
 namespace led {
 
 typedef unsigned char BYTE;
 constexpr unsigned char kCtrlHeader[2] = { 0xAA, 0x55 };            // 传输头
 constexpr unsigned char kCtrlReserved[3] = { 0x01, 0x02, 0x03 };    // 保留字
 constexpr unsigned char kCtrlEnd = 0xAF;                            // 结束标志符
-constexpr unsigned int kMaxDataLen = 1040;                         // 报文最大长度
+constexpr unsigned int kMaxDataLen = 1040;                          // 报文最大长度
 
 enum kCommand {                   // 报文命令
   COM_SET_TIME = 0x10,            // 0x10 - 设置时间
@@ -155,5 +154,4 @@ class Led {
   int size_;      //缓冲区内数据长度
 };
 }  // namespace led
-}  // namespace lp
 #endif  // F__CODING_CPP_LPLED_LP_LP_LED_H_
