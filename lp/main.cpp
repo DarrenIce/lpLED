@@ -20,7 +20,7 @@ int _tmain(int argc, _TCHAR* argv[]) {
   else {
     std::cout << "OpenListenThread success !" << std::endl;
   }
-  while (led->test()) {
+  while (led->CommandOperate()) {
     led->Send(buffer, &size);
     std::cout << mySerialPort.WriteData(buffer, size) << std::endl;
     std::cout << mySerialPort.GetBytesInCOM() << std::endl;

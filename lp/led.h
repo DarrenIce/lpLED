@@ -166,8 +166,6 @@ class Led {
   // @param： int* size 存储接收报文的长度
   void Send(BYTE* buffer, int* size);
 
-  bool test();
-
  private:
   BYTE* buffer_;  //发送缓冲区
   int size_;      //缓冲区内数据长度

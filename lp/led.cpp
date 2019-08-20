@@ -631,9 +631,8 @@ void Led::TTSHelper()
   }
   */
   std::unordered_map<std::string, int> m;
-  for (int i = 0; i < text1.size(); i++) {
+  for (int i = 0; i < text1.size(); i++)
     m[text1[i]] = i + 1;
-  }
   std::cin >> context;
   for (int i = context.size(); i >0; i--) {
     for (int j = 0; j < context.size() - i+1; j++) {
@@ -683,10 +682,5 @@ void Led::SetDisplayChangeMode(BYTE line_num, BYTE mode)
 void Led::Send(BYTE* buffer, int* size) {
   memcpy(buffer, buffer_, size_);
   *size = size_;
-}
-bool Led::test()
-{
-  TTSHelper();
-  return true;
 }
 }  // namespace led
