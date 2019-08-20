@@ -2,7 +2,11 @@
 #define F__CODING_CPP_LPLED_LP_LP_LED_H_
 
 #include <iostream>
+#include <iomanip>
+#include <vector>
+#include <unordered_set>
 #include <string>
+#include <unordered_map>
 namespace led {
 
 typedef unsigned char BYTE;
@@ -16,9 +20,11 @@ enum kCommand {                   // 报文命令
   COM_SET_AD = 0x25,              // 0x25 - 设置彩色广告
   COM_COLORED_DISPLAY = 0x26,     // 0x26 - 彩色显示
   COM_CANCEL_DISPLAY = 0x21,      // 0x21 - 取消显示
+  COM_TEXT_TO_SPEECH = 0x22,      // 0x22 - 语音播报
   COM_TIMING_DISPLAY = 0x27,      // 0x27 - 带定时的彩色显示
   COM_TIME_DISPLAY = 0xF6,        // 0xF6 - 设置时间显示模式
   COM_ADPAGE_CHANGE = 0x51,       // 0x51 - 设置广告换页模式
+  COM_DISPLAY_CHANGE = 0x52,      // 0x52 - 设置临时信息换页模式
   COM_CHAR_COLOR = 0x53,          // 0x53 - 设置字符颜色
   COM_LINE_COLOR = 0x54,          // 0x54 - 设置行颜色变换
   COM_COLOR_CHANGE = 0x55         // 0x55 - 设置字符颜色变换
@@ -66,8 +72,6 @@ enum kColor {
 // 例如调用SetTime()可以得到设置时间的报文，它被存储在_buffer(存储内容)和_size(存储长度)中
 class Led {
  public:
-  Led();
-  ~Led();
   // 命令行操作函数
   // 
   // 负责与用户的交互
@@ -111,6 +115,11 @@ class Led {
   // @param： BYTE line_num 行号，取值范围1-4
   // @param： BYTE mode 广告换页模式
   void SetAdChangeMode(BYTE line_num, BYTE mode);
+  // 设置临时信息换页模式
+  //
+  // @param： BYTE line_num 行号，取值范围1-4
+  // @param： BYTE mode 临时信息换页模式
+  void SetDisplayChangeMode(BYTE line_num, BYTE mode);
   // 设置字符颜色函数
   // 
   // @param： BYTE line_num 行号，取值范围1-4
@@ -128,6 +137,14 @@ class Led {
   // @param： BYTE* color 字符颜色，长度为2位，有效值1~3，1 = 红色，2 = 绿色，3 = 黄色。第一个字节为前景色，第二个字节为背景色
   // @note： 该命令用于设置指定行中每个汉字颜色变换，每0.5秒变换一次
   void CharColorTrans(BYTE line_num, BYTE* color);
+  // 语音播报函数
+  //
+  // @param： std::string context 语音播报内容
+  void TextToSpeech(std::string context);
+  // 语音播报辅助函数
+  //
+  // 负责生成语音播报内容
+  void TTSHelper();
   // 打包函数
   // 
   // @param： kCommond com 报文命令
@@ -149,9 +166,20 @@ class Led {
   // @param： int* size 存储接收报文的长度
   void Send(BYTE* buffer, int* size);
 
+  bool test();
+
  private:
   BYTE* buffer_;  //发送缓冲区
   int size_;      //缓冲区内数据长度
+
+ public:
+   static Led* GetInstance();
+ private:
+   Led();
+   Led(const Led&);
+   Led& operator =(const Led&);
+   ~Led();
+   static Led instance_;
 };
 }  // namespace led
 #endif  // F__CODING_CPP_LPLED_LP_LP_LED_H_

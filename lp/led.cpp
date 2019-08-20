@@ -50,6 +50,12 @@ static constexpr unsigned char kCrcLo[] = {
     0x41, 0x81, 0x80, 0x40
 };
 
+Led Led::instance_;
+
+Led* Led::GetInstance() {
+  return &instance_;
+}
+
 Led::Led() {
   buffer_ = new BYTE[kMaxDataLen];
 }
@@ -71,7 +77,8 @@ bool Led::CommandOperate() {
     << "4 - 定时显示	5 - 时间显示" << std::endl
     << "6 - 广告换页	7 - 字符颜色" << std::endl
     << "8 - 行色变换	9 - 字色变换" << std::endl
-    << "10 - 退出" << std::endl;
+    << "10 - 语音播报   11 - 显示换页" << std::endl
+    << "12 - 退出" << std::endl;
   std::cin >> i;
   switch (i) {
     case 0:
@@ -108,6 +115,7 @@ bool Led::CommandOperate() {
       SetAd(line_num, color[0], context);
       return true;
     case 2:
+      /*
       std::cout << "请输入行号: (3/4)";
       std::cin >> temp;
       line_num = temp - '0';
@@ -127,9 +135,11 @@ bool Led::CommandOperate() {
           color[0] = YELLOW;
           break;
       }
+      */
       std::cout << "请输入显示内容: ";
       std::cin >> context;
-      ColoredDisplay(line_num, time, color[0], context);
+      ColoredDisplay(3, 3, RED, context);
+      //ColoredDisplay(line_num, time, color[0], context);
       return true;
     case 3:
       std::cout << "请输入要取消的行号: (3/4)";
@@ -331,6 +341,99 @@ bool Led::CommandOperate() {
       }
       CharColorTrans(line_num, color);
       return true;
+    case 10:
+      TTSHelper();
+      return true;
+    case 11:
+      std::cout << "请输入行号: (3/4)";
+      std::cin >> temp;
+      line_num = temp - '0';
+      std::cout << "请输入换页模式" << std::endl
+        << "0 - 从右往左滚动模式" << std::endl
+        << "1 - 下翻页(移动)" << std::endl
+        << "2 - 下翻页(覆盖)" << std::endl
+        << "3 - 下翻页(清除)" << std::endl
+        << "4 - 下翻页(空白)" << std::endl
+        << "5 - 上翻页(移动)" << std::endl
+        << "6 - 上翻页(覆盖)" << std::endl
+        << "7 - 上翻页(清除)" << std::endl
+        << "8 - 上翻页(空白)" << std::endl
+        << "9 - 左画刷(覆盖)" << std::endl
+        << "10 - 左画刷(清除)" << std::endl
+        << "11 - 右画刷(覆盖)" << std::endl
+        << "12 - 右画刷(清除)" << std::endl
+        << "13 - 开门式(覆盖)" << std::endl
+        << "14 - 开门式(清除)" << std::endl
+        << "15 - 关门式(覆盖)" << std::endl
+        << "16 - 关门式(清除)" << std::endl
+        << "17 - 页切换模式" << std::endl
+        << "18 - 从右进入的页切换模式" << std::endl
+        << "19 - 定屏模式" << std::endl;
+      std::cin >> i;
+      switch (i) {
+        case 0:
+          mod = SCOLL_RIGHT_TO_LEFT;
+          break;
+        case 1:
+          mod = PAGE_DOWN_MOVE;
+          break;
+        case 2:
+          mod = PAGE_DOWN_COVER;
+          break;
+        case 3:
+          mod = PAGE_DOWN_CLEAR;
+          break;
+        case 4:
+          mod = PAGE_DOWN_BLANK;
+          break;
+        case 5:
+          mod = PAGE_UP_MOVE;
+          break;
+        case 6:
+          mod = PAGE_UP_COVER;
+          break;
+        case 7:
+          mod = PAGE_UP_CLEAR;
+          break;
+        case 8:
+          mod = PAGE_UP_BLANK;
+          break;
+        case 9:
+          mod = LEFT_BRUSH_COVER;
+          break;
+        case 10:
+          mod = LEFT_BRUSH_CLEAR;
+          break;
+        case 11:
+          mod = RIGHT_BRUSH_COVER;
+          break;
+        case 12:
+          mod = RIGHT_BRUSH_CLEAR;
+          break;
+        case 13:
+          mod = OPEN_DOOR_COVER;
+          break;
+        case 14:
+          mod = OPEN_DOOR_CLEAR;
+          break;
+        case 15:
+          mod = CLOSE_DOOR_COVER;
+          break;
+        case 16:
+          mod = CLOSE_DOOR_CLEAR;
+          break;
+        case 17:
+          mod = PAGE_CHANGE;
+          break;
+        case 18:
+          mod = RIGHT_PAGE_CHANGE;
+          break;
+        case 19:
+          mod = STOP;
+          break;
+      }
+      SetDisplayChangeMode(line_num, mod);
+      return true;
     default:
       return false;
   }
@@ -461,6 +564,89 @@ void Led::CharColorTrans(BYTE line_num, BYTE *color) {
   PackageCommand(COM_COLOR_CHANGE, data, size, buffer_, &size_);
   delete[]data;
 }
+// 语音播报函数
+void Led::TextToSpeech(std::string context)
+{
+  int size = 0;
+  BYTE* data = new BYTE[kMaxDataLen];
+  memcpy(data, context.c_str(), context.size());
+  size += context.size();
+  PackageCommand(COM_TEXT_TO_SPEECH, data, size, buffer_, &size_);
+  delete[]data;
+}
+// 语音播报辅助函数
+void Led::TTSHelper()
+{
+  std::vector<std::string> text1 = { "欢迎光临","一路平安","请等待人工确认","余额不足",
+    "此车已进场","此车已出场","此车无权限","此车已过期","此车黑名单","车位已满","请缴费",
+    "有效期","音量","此卡","已过期","无效","有效","有效期","此车","请入场停车","黑名单",
+    "记录","下载","成功","失败","已进场","已出场","无权限","删除","请等待","人工确认",
+    "亲情车","临时车","约租车","储值车","免费车","未派车","谢谢","欢迎回家","请通行",
+    "未授权","已挂失","禁止通行","扣款","金额","停车","小时",
+    "0","1","2","3","4","5","6","7","8","9",
+    "节日","快乐","新年","剩余","读卡","车卡不符","一路顺风",
+    "A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z",
+    "单号","","二维码","非通行时段","","减速慢行","禁止通行","扫码","时间","双号","",
+    "微信","无牌车","","","支付","","","本车位已停车","车未发行","车未入场","车未授权",
+    "车已过期","车已入场","请按时入场","请充值交费","月租已过期","重复进入","重复外出" };
+  /*
+  system("cls");
+  std::cout << "请输入需要播报的内容的序号, 仅支持以下内容" << std::endl
+    << "---------------------------" << std::endl
+    << "| " << std::setw(5) << std::left << "序号" <<" | "<< std::setw(15) << std::left << "语音内容" <<" |"<< std::endl;
+  for (int i = 0; i < text1.size(); i++) {
+    std::cout << "| " << std::setw(5) << std::left << i << " | " << std::setw(15) << std::left << text1[i] << " |" << std::endl;
+  }
+  */
+  // std::cout << "仅支持以下汉字" << std::endl;
+  // std::unordered_set<std::string> text2 = { "十","百","千","万","年","月","日","天","条","京","黑",
+  //  "吉","辽","苏","鲁","皖","冀","豫","鄂","湘","赣","陕","晋","川","青","琼","粤","浙",
+  //  "闽","甘","云","台","贵","渝","沪","津","新","桂","蒙","宁","军","学","警","点","圆",
+  //  "元","您","好","分","空","海","北","沈","兰","济","南","广","成","甲","乙","丙","午",
+  //  "未","申","庚","己","辛","壬","寅","戌","祝","藏","港","澳","领","使","请","宝" };
+  // std::cout << "十, 百, 千, 万, 年, 月, 日, 天, 条, 京" << std::endl
+  //  << "黑, 吉, 辽, 苏, 鲁, 皖, 冀, 豫, 鄂, 湘" << std::endl
+  //  << "赣, 陕, 晋, 川, 青, 琼, 粤, 浙, 闽, 甘" << std::endl
+  //  << "云, 台, 贵, 渝, 沪, 津, 新, 桂, 蒙, 宁" << std::endl
+  //  << "军, 学, 警, 点, 圆, 元, 您, 好, 分, 空" << std::endl
+  //  << "海, 北, 沈, 兰, 济, 南, 广, 成, 甲, 乙" << std::endl
+  //  << "丙, 午, 未, 申, 庚, 己, 辛, 壬, 寅, 戌" << std::endl
+  //  << "祝, 藏, 港, 澳, 领, 使, 请, 宝" << std::endl;
+  std::string context;
+  /*
+  int flag = 1;
+  //std::cout << "请选择输入类型" << std::endl
+  //  << "1 - 提示音,2 - 车牌号" << std::endl;
+  std::cin >> flag;
+  if (flag == 1) {
+    int a;
+    std::cin >> a;
+    while (a >= 1 && a <= 119) {
+      context += a;
+      std::cin >> a;
+    }
+  }
+  else if (flag == 2) {
+    std::cin >> context;
+  }
+  */
+  std::unordered_map<std::string, int> m;
+  for (int i = 0; i < text1.size(); i++) {
+    m[text1[i]] = i + 1;
+  }
+  std::cin >> context;
+  for (int i = context.size(); i >0; i--) {
+    for (int j = 0; j < context.size() - i+1; j++) {
+      auto it = m.find(context.substr(j, i));
+      if (it != m.end()) {
+        std::string s1 = context.substr(0, j);
+        std::string s2 = i+j<context.size()?context.substr(i + j):"";
+        context = s1 + (char)it->second + s2;
+      }
+    }
+  }
+  TextToSpeech(context);
+}
 // 带定时的彩色显示函数
 void Led::TimingDisplay(BYTE line_num, BYTE time, BYTE color, std::string context) {
   int size = 0;
@@ -483,9 +669,24 @@ void Led::SetAdChangeMode(BYTE line_num, BYTE mode) {
   PackageCommand(COM_ADPAGE_CHANGE, data, size, buffer_, &size_);
   delete[]data;
 }
+// 设置临时信息换页模式
+void Led::SetDisplayChangeMode(BYTE line_num, BYTE mode)
+{
+  int size = 0;
+  BYTE* data = new BYTE[kMaxDataLen];
+  data[size++] = line_num;
+  data[size++] = mode;
+  PackageCommand(COM_DISPLAY_CHANGE, data, size, buffer_, &size_);
+  delete[]data;
+}
 // 发送函数
 void Led::Send(BYTE* buffer, int* size) {
   memcpy(buffer, buffer_, size_);
   *size = size_;
+}
+bool Led::test()
+{
+  TTSHelper();
+  return true;
 }
 }  // namespace led

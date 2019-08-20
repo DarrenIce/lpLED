@@ -5,7 +5,7 @@ int _tmain(int argc, _TCHAR* argv[]) {
   serialport::CSerialPort mySerialPort;
   BYTE* buffer = new BYTE[led::kMaxDataLen];
   int size = 0;
-  led::Led led;
+  led::Led* led=led::Led::GetInstance();
   std::string temp;
 
   if (!mySerialPort.InitPort(3, CBR_9600, 'N', 8, 1, EV_RXCHAR)) {
@@ -20,8 +20,8 @@ int _tmain(int argc, _TCHAR* argv[]) {
   else {
     std::cout << "OpenListenThread success !" << std::endl;
   }
-  while (led.CommandOperate()) {
-    led.Send(buffer, &size);
+  while (led->test()) {
+    led->Send(buffer, &size);
     std::cout << mySerialPort.WriteData(buffer, size) << std::endl;
     std::cout << mySerialPort.GetBytesInCOM() << std::endl;
   }
